@@ -1,0 +1,215 @@
+---
+title: "Example script"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Setup
+
+Loading the library:
+
+```{r setup}
+library(seatrackfunctions)
+```
+
+```{r setlog, echo = FALSE}
+library(logger)
+log_appender(appender_stdout)
+
+```
+
+There are a few things that need to be set before the functions can be used. 
+
+It is important that we can monitor changes made and the reasoning behind them. This package uses the [logger](https://cran.r-project.org/web/packages/logger/index.html) package for logging. This will print messages to the console and write them to a file.
+
+```{r startlog, eval = FALSE}
+start_logging()
+
+```
+
+By default the logging level is set to **INFO**. You can also set the scripts to be more verbose by changing the log threshold:
+
+```{r verbose, eval = FALSE}
+log_threshold (TRACE)
+```
+
+For more information about different logger levels see [log_levels](https://daroczig.github.io/logger/reference/log_levels.html).
+
+You also need to point the package to where the seatrack directory is placed in your file system. This variable will be used by many functions contained in this package.
+
+```{r fakesetpath, eval = FALSE}
+path_to_seatrack <- file.path("a_filepath","SEATRACK - shared")
+set_sea_track_folder(path_to_seatrack)
+```
+
+```{r generatepath, echo = FALSE}
+# Not actually setting path in the vignette
+path_to_seatrack <- file.path("a_filepath","SEATRACK - shared")
+.sea_track_folder <- path_to_seatrack
+logger::log_info("Sea track folder set to: ", .sea_track_folder)
+```
+
+## Loading data
+
+Once this is set up you can open a partner metadata file. Note that the files shown in this vignette are missing a number of columns present in the real files.
+
+```{r fakeloadpartnerdata, eval=FALSE}
+
+partner_data <- load_partner_metadata("Metadata_SEATRACK_2025-TestColony.xlsx")
+
+```
+
+```{r generatepartnerdata, echo=FALSE}
+# Not using real data in the vignette
+
+partner_data <- list(
+  `ENCOUNTER DATA`=tibble::tibble(
+    date = as.Date("2025-01-10"),
+    ring_number = "42",
+    logger_id_deployed=NA,
+    logger_id_retrieved="L1",
+    colony = "TestColony",
+    nest_latitude = NA,
+    nest_longitude = NA,
+    comment = "A large friendly bird"
+  ),
+  `LOGGER RETURNS` = tibble::tibble(
+    logger_id = "L1",
+    status = "Downloaded",
+    `download / stop_date` = as.Date("2025-01-10"),
+    `downloaded by` = "User",
+    comment = "Logger returned",
+    `stored or sent to?` = ""
+  ),
+  `RESTART TIMES` = tibble::tibble(
+    logger_id = character(),
+    startdate_GMT = as.Date(character()),
+    starttime_GMT = as.POSIXct(character()),
+    `Logging mode` = character(),
+    intended_species = character(),
+    comment = character()
+  )
+)
+
+```
+
+This loads the Excel file into R as a list, where each element of the list is different sheet of the Excel file. 
+
+```{r showpartnerdata}
+names(partner_data)
+head(partner_data$`LOGGER RETURNS`)
+```
+
+You can then load the master file that you wish to update. This can be done by using the colony name. 
+
+```{r fakeloadmasterdata, eval = FALSE}
+master_import <- load_master_import("TestColony")
+
+```
+
+```{r generatemasterdata, echo = FALSE}
+colony <- "TestColony"
+master_import_folder <- file.path(.sea_track_folder, "Database", "Imports_Metadata")
+full_colony_file_path <- file.path(master_import_folder, "imports_TestColony_2025.xlsx")
+logger::log_success("Master import file for colony '", colony, "' found at: ", full_colony_file_path)
+
+import_list <- list(
+  METADATA = tibble::tibble(
+    date = as.Date("2024-01-10"),
+    ring_number = "42",
+    logger_id_deployed="L1",
+    logger_id_retrieved=NA,
+    colony = "TestColony",
+    comment = "A small angry bird"
+  ),
+  STARTUP_SHUTDOWN = tibble::tibble(
+    logger_serial_no = "L1",
+    logger_model = "birdTracker5000",
+    producer = "loggerMcLogface",
+    production_year = 2024,
+    project = "seatrack",
+    starttime_gmt = as.Date("2024-01-01"),
+    logging_mode = NA,
+    started_by = NA,
+    started_where = colony,
+    days_delayed = NA,
+    programmed_gmt_time = NA,
+    intended_species = "bird",
+    intended_location = colony,
+    intended_deployer = NA,
+    shutdown_session = NA,
+    field_status = NA,
+    downloaded_by = NA,
+    download_type = NA,
+    download_date = NA,
+    decomissioned = NA,
+    shutdown_date = NA,
+    comment = "",
+    )
+)
+
+master_import <- list(data = import_list, path = full_colony_file_path)
+
+```
+
+
+The function returns a list with two elements, `data` and `path`. `path` is the full file path of the loaded. `data` is a list, where each element is a sheet from the imported master file
+
+```{r showmaster}
+names(master_import$data)
+head(master_import$data$METADATA)
+
+```
+
+## Workflow
+
+There are several steps to updating the master import sheet. Firstly checking startup files for missing logger sessions.
+```{r missing loggers}
+master_import_data <- master_import$data
+updated_startup <- add_loggers_from_startup(master_import_data$`STARTUP_SHUTDOWN`)
+
+```
+
+Then appending reported encounter data. 
+
+```{r appendmetadata}
+
+updated_metadata <- append_encounter_data(master_import_data$METADATA, partner_data$`ENCOUNTER DATA`)
+
+```
+
+Finally the processing reported logger returns and attempts to update the appropriate session in the master startup sheet, setting download status and dates. 
+
+This function also handles loggers that the partner restearts, generating new sessions for them in the master startup sheet.
+
+```{r returns}
+updated_sessions <- handle_returned_loggers("TestColony", updated_startup, partner_data$`LOGGER RETURNS`, partner_data$`RESTART TIMES`)
+```
+
+At every stage, the log will report the changes that the functions have made to the master sheet. The log will also report when it is unable to handle some part of the partner supplied metadata. This can help identify areas that need manually fixing in either the partner metadata sheet or the master sheet.
+
+## Combined workflow
+
+This workflow can be run using a single function, `handle_partner_metadata` that takes the colony name and the imported excel files as arguments. 
+
+```{r handlealldata}
+new_master_sheets <- handle_partner_metadata("TestColony", partner_data, master_import_data)
+```
+
+Finally, if you are happy with the changes made, you can save the updated master sheet. 
+
+```{r savefile, eval=FALSE}
+save_master_sheet(new_master_sheets, master_import$path)
+```
+
+

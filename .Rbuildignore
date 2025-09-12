@@ -1,0 +1,8 @@
+^renv$
+^renv\.lock$
+^seatrackfunctions\.Rproj$
+^\.Rproj\.user$
+log.txt
+^test_data
+^.*\.xlsx
+test_script.R

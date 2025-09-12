@@ -1,0 +1,22 @@
+Package: seatrackfunctions
+Title: Utility Functions for Seatrack
+Version: 0.0.0.9000
+Authors@R: 
+    person("Julian", "Evans", , "julian.evans@nina.no", role = c("aut", "cre"))
+Description: Some utility functions to assist in the handling of data as part of the seatrack project
+URL: https://github.com/jevansbio/seatrack_functions
+License: `use_mit_license()`
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports: 
+    logger,
+    readxl,
+    openxlsx2,
+    tibble
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3

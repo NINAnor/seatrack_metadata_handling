@@ -1,7 +1,3 @@
-requireNamespace("logger")
-requireNamespace("readxl")
-requireNamespace("openxlsx2")
-
 #' Set the base directory for the sea track folder
 #'
 #' This function sets a global variable used by other functions.
@@ -45,6 +41,7 @@ start_logging <- function(log_dir = NULL, log_file = paste0("seatrack_functions_
     }
 
     log_appender(appender_tee(log_file))
+    log_threshold(INFO)
     log_info("Logging started. Log file: ", log_file)
 }
 
@@ -92,6 +89,8 @@ get_master_import_path <- function(colony) {
 
     return(full_colony_file_path)
 }
+
+
 
 #' Get paths to all startup Excel files
 #'
@@ -183,12 +182,28 @@ load_sheets_as_list <- function(file_path, sheets, skip = 0, force_date = TRUE, 
     return(data_list)
 }
 
+#' Load unresponsive logger sheet for current year
+#' This function loads the record of unresponsive loggers.
+#'
+#' @return A list consisting of two items.
+#'  data: The loaded unresponsive logger information.
+#'  path: The file path of the loaded unresponsive logger information file.
+#'
+load_unresponsive <- function() {
+    date_today <- as.Date((Sys.time()))
+    year <- format(date_today, "%Y")
+
+}
+
+
 #' Load master import file for a given colony
 #'
 #' This function loads the master import file for a specified colony.
 #' It iterates through the appropriate sheets and combines the data into a list of data frames.
 #' @param colony A character string specifying the name of the colony.
-#' @return A list of data frames, each corresponding to a sheet in the master import file.
+#' @return A list consisting of two items.
+#'  data: A list of tibbles, each corresponding to a sheet in the master import file.
+#'  path: The file path of the loaded master import file.
 #' @examples
 #' dontrun{
 #' load_master_import("ColonyA")
@@ -229,7 +244,7 @@ load_master_import <- function(colony) {
 
     import_list <- load_sheets_as_list(file_path, sheets, col_types = list(NULL, startup_col_types))
 
-    return(import_list)
+    return(data = import_list, path = file_path)
 }
 
 
@@ -276,7 +291,7 @@ append_encounter_data <- function(master_metadata, encounter_data) {
     names(encounter_data)[names(encounter_data) == "other relevant variables, e.g. 'gonys', 'culmen,"] <- "other"
 
     # remove invalid rows from encounter_data
-    encounter_data <- encounter_data[!is.na(date), ]
+    encounter_data <- encounter_data[!is.na(encounter_data$date), ]
 
     # If the master_metadata sheet is is lacking the nest_latitude and nest_longitude columns, add them
     if (!"nest_latitude" %in% colnames(master_metadata)) {
@@ -296,8 +311,8 @@ append_encounter_data <- function(master_metadata, encounter_data) {
 
     # Check if duplicate rows exist based on logger_id and date
 
-    encounter_id_date <- paste(encounter_data$logger_id, encounter_data$date)
-    master_metadata_id_date <- paste(master_metadata$logger_id, master_metadata$date)
+    encounter_id_date <- paste(encounter_data$ring_number, encounter_data$logger_id_retrieved, encounter_data$logger_id_deployed, encounter_data$date)
+    master_metadata_id_date <- paste(master_metadata$ring_number, master_metadata$logger_id_retrieved, master_metadata$logger_id_deployed, master_metadata$date)
 
     if (sum(encounter_id_date %in% master_metadata_id_date) > 0) {
         log_trace("Duplicate rows found based on logger_id and date. These rows will not be appended to the master metadata.")
@@ -593,6 +608,7 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
 
     log_trace("Check returned loggers")
     valid_status <- logger_returns$status != "No download attemted"
+    unhandled_loggers <- tibble()
     if (any(valid_status)) {
         all_updated_session_summary <- tibble()
         logger_indexes <- which(valid_status)
@@ -604,6 +620,7 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
             unfinished_session_result <- get_unfinished_session(master_startup, logger_id, logger_download_stop_date)
             if (is.null(unfinished_session_result)) {
                 log_warn(paste("Skipping logger ID:", logger_id, "due to unresolved unfinished session. This may indicate an error or that this session has already been ended."))
+                unhandled_loggers <- rbind(unhandled_loggers, logger_returns[i, ])
                 next
             }
             unfinished_index <- unfinished_session_result$index
@@ -620,6 +637,12 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
         }
         log_success("Updated ", nrow(all_updated_session_summary), " sessions.")
         log_success("Updated sessions:\n", paste(capture.output(print(all_updated_session_summary, n = nrow(all_updated_session_summary)))[c(-1, -3)], collapse = "\n"))
+
+        if (nrow(unhandled_loggers) > 0) {
+            unhandled_loggers_summary <- unhandled_loggers[, c("logger_id", "status", "download / stop_date")]
+            log_warn(nrow(unhandled_loggers_summary), "returns were not processed.")
+            log_warn("Unhandled returns:\n", paste(capture.output(print(unhandled_loggers_summary, n = nrow(unhandled_loggers_summary)))[c(-1, -3)], collapse = "\n"))
+        }
     }
 
     # Handle restarts
@@ -675,16 +698,25 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
 
         master_startup <- rbind(master_startup, added_sessions)
     }
+
+    # HANDLE UNRESPONSIVES
+
     return(master_startup)
 }
 
 #' Add partner provided metadata to the master import file
 #'
 #' This function adds metadata provided by partners to a master import file of the appropriate colony.
+#' It firstly adds missing sessions by checking start up files.
+#' It then appends the reported encounter data, avoiding duplicate rows.
+#' Finally it updates sessions based on reported logger returns. This includes generating new sessions for loggers restarted in the field.
 #'
 #' @param colony A character string specifying the name of the colony.
 #' @param new_metadata List of tibbles, each corresponding to a sheet in the partner provided information file.
 #' @param master_import List of tibbles, each corresponding to a sheet in the master import file.
+#'
+#' @return An updated version of the master import file, as a list where each element is a sheet from the excel file.
+#' @export
 handle_partner_metadata <- function(colony, new_metadata, master_import) {
 
     log_info("Add missing sessions from start up files")
@@ -712,7 +744,7 @@ handle_partner_metadata <- function(colony, new_metadata, master_import) {
 #' specified by `filename`.
 #'
 #' @param new_master_sheets A data frame containing the master sheet data to be saved.
-#' @param filename A string specifying the path and name of the Excel file to be created.
+#' @param filepath A string specifying the path and name of the Excel file to be created.
 #'
 #' @return No return value.
 #'
@@ -722,6 +754,6 @@ handle_partner_metadata <- function(colony, new_metadata, master_import) {
 #' }
 #'
 #' @export
-save_master_sheet <- function(new_master_sheets, filename) {
-    write_xlsx(new_master_sheets, filename, first_row = TRUE, first_col = TRUE, widths = "auto", na.strings = "")
+save_master_sheet <- function(new_master_sheets, filepath) {
+    openxlsx2::write_xlsx(new_master_sheets, filepath, first_row = TRUE, first_col = TRUE, widths = "auto", na.strings = "")
 }

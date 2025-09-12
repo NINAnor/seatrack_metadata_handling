@@ -1,5 +1,5 @@
 renv::restore()
-source("R/functions.R")
+#source("R/functions.R")
 
 start_logging("C:\\Users\\julian.evans\\Documents\\repositories\\seatrack_functions")
 dir = "C:\\Users\\julian.evans\\Documents\\repositories\\seatrack_functions\\test_data\\test_seatrack_folder"

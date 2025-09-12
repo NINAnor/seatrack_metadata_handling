@@ -1,3 +1,6 @@
 /test_data
 *log*.txt
 /*.xlsx
+.Rproj.user
+inst/doc
+test_script.R
