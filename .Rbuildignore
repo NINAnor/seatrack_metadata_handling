@@ -6,3 +6,7 @@ log.txt
 ^test_data
 ^.*\.xlsx
 test_script.R
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
