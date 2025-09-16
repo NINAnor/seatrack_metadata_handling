@@ -14,10 +14,12 @@
 <url><loc>https://jevansbio.github.io/seatrack_functions/reference/handle_returned_loggers.html</loc></url>
 <url><loc>https://jevansbio.github.io/seatrack_functions/reference/index.html</loc></url>
 <url><loc>https://jevansbio.github.io/seatrack_functions/reference/load_master_import.html</loc></url>
+<url><loc>https://jevansbio.github.io/seatrack_functions/reference/load_nonresponsive.html</loc></url>
+<url><loc>https://jevansbio.github.io/seatrack_functions/reference/load_nonresponsive_sheet.html</loc></url>
 <url><loc>https://jevansbio.github.io/seatrack_functions/reference/load_partner_metadata.html</loc></url>
 <url><loc>https://jevansbio.github.io/seatrack_functions/reference/load_sheets_as_list.html</loc></url>
-<url><loc>https://jevansbio.github.io/seatrack_functions/reference/load_unresponsive.html</loc></url>
 <url><loc>https://jevansbio.github.io/seatrack_functions/reference/save_master_sheet.html</loc></url>
+<url><loc>https://jevansbio.github.io/seatrack_functions/reference/save_nonresponsive.html</loc></url>
 <url><loc>https://jevansbio.github.io/seatrack_functions/reference/seatrackfunctions-package.html</loc></url>
 <url><loc>https://jevansbio.github.io/seatrack_functions/reference/set_comments.html</loc></url>
 <url><loc>https://jevansbio.github.io/seatrack_functions/reference/set_master_startup_value.html</loc></url>
