@@ -171,6 +171,15 @@ head(master_import$data$METADATA)
 
 ```
 
+Optionally, you can also load or initialise some sheets of nonresponsive loggers. This function takes a vector of file paths and a vector of 
+
+```{r loadunresponsive}
+
+nonresponsive_list <- load_nonresponsive(c("lotek_sheet.xlsx", "migrate_sheet.xlsx"), c("Lotek", "MigrateTech))
+
+```
+
+
 ## Workflow
 
 There are several steps to updating the master import sheet. Firstly checking startup files for missing logger sessions.
@@ -190,10 +199,12 @@ updated_metadata <- append_encounter_data(master_import_data$METADATA, partner_d
 
 Finally the processing reported logger returns and attempts to update the appropriate session in the master startup sheet, setting download status and dates. 
 
-This function also handles loggers that the partner restearts, generating new sessions for them in the master startup sheet.
+This function also handles loggers that the partner restearts, generating new sessions for them in the master startup sheet. 
+
+The function will also update the nonresponsive lists. 
 
 ```{r returns}
-updated_sessions <- handle_returned_loggers("TestColony", updated_startup, partner_data$`LOGGER RETURNS`, partner_data$`RESTART TIMES`)
+updated_sessions <- handle_returned_loggers("TestColony", updated_startup, partner_data$`LOGGER RETURNS`, partner_data$`RESTART TIMES`, nonresponsive_list)
 ```
 
 At every stage, the log will report the changes that the functions have made to the master sheet. The log will also report when it is unable to handle some part of the partner supplied metadata. This can help identify areas that need manually fixing in either the partner metadata sheet or the master sheet.
@@ -203,7 +214,9 @@ At every stage, the log will report the changes that the functions have made to 
 This workflow can be run using a single function, `handle_partner_metadata` that takes the colony name and the imported excel files as arguments. 
 
 ```{r handlealldata}
-new_master_sheets <- handle_partner_metadata("TestColony", partner_data, master_import_data)
+new_sheets <- handle_partner_metadata("TestColony", partner_data, master_import_data)
+new_master_sheets <- new_sheets$master_sheet
+new_nonresponsive_list <- new_sheets$nonresponsive_list
 ```
 
 Finally, if you are happy with the changes made, you can save the updated master sheet. 
@@ -212,4 +225,10 @@ Finally, if you are happy with the changes made, you can save the updated master
 save_master_sheet(new_master_sheets, master_import$path)
 ```
 
+And the new/modified nonresponsive sheets.
+
+```{r savenonresponsive, eval=FALSE}
+
+save_nonresponsive(paths, new_nonresponsive_list)
+```
 

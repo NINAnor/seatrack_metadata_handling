@@ -12,6 +12,7 @@ Some utility functions to assist in the handling of data as part of the seatrack
 Useful links:
 \itemize{
   \item \url{https://github.com/jevansbio/seatrack_functions}
+  \item \url{https://jevansbio.github.io/seatrack_functions/}
 }
 
 }

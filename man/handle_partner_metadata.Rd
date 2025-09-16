@@ -4,7 +4,12 @@
 \alias{handle_partner_metadata}
 \title{Add partner provided metadata to the master import file}
 \usage{
-handle_partner_metadata(colony, new_metadata, master_import)
+handle_partner_metadata(
+  colony,
+  new_metadata,
+  master_import,
+  nonresponsive_list = list()
+)
 }
 \arguments{
 \item{colony}{A character string specifying the name of the colony.}

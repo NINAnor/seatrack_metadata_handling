@@ -4,7 +4,13 @@
 \alias{handle_returned_loggers}
 \title{Handle restarted loggers}
 \usage{
-handle_returned_loggers(colony, master_startup, logger_returns, restart_times)
+handle_returned_loggers(
+  colony,
+  master_startup,
+  logger_returns,
+  restart_times,
+  nonresponsive_list = list()
+)
 }
 \arguments{
 \item{colony}{A character string specifying the name of the colony.}
@@ -14,9 +20,16 @@ handle_returned_loggers(colony, master_startup, logger_returns, restart_times)
 \item{logger_returns}{A data frame containing logger return information.}
 
 \item{restart_times}{A data frame containing logger restart information.}
+
+\item{nonresponsive_list}{A list containing tibbles of unresponsive loggers for different manufacturers.
+The name of the list element should match the producer name in master_startup (e.g., "Lotek", "MigrateTech").}
 }
 \value{
-An updated dataframe containing the modified master import data frame.
+A list consisting of two elements:
+\itemize{
+\item `master_startup``: An updated dataframe containing the modified master import data frame.
+\item \code{nonresponsive_list}: An updated list containing the modified nonresponsive logger data frames.
+}
 }
 \description{
 This function processes logger return information and updates the master import data frame accordingly.

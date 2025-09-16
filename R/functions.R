@@ -182,19 +182,77 @@ load_sheets_as_list <- function(file_path, sheets, skip = 0, force_date = TRUE, 
     return(data_list)
 }
 
-#' Load unresponsive logger sheet for current year
-#' This function loads the record of unresponsive loggers.
+#' Load nonresponsive logger sheet for current year
+#' This function loads the record of unresponsive loggers. If the filepath provided does not exist, it initialises new sheets.
+#' @param file_path String indicating from where the file should be loaded from.
+#' @param manufacturer String indicating name of the manufacturer. Either "Lotek" or "MigrateTech".
+#' @return A tibble containing the unresponsive logger data.
 #'
-#' @return A list consisting of two items.
-#'  data: The loaded unresponsive logger information.
-#'  path: The file path of the loaded unresponsive logger information file.
-#'
-load_unresponsive <- function() {
-    date_today <- as.Date((Sys.time()))
-    year <- format(date_today, "%Y")
-
+load_nonresponsive_sheet <- function(file_path, manufacturer = c("Lotek", "MigrateTech")) {
+    manufacturer <- match.arg(manufacturer)
+    loaded_sheet <- NULL
+    #Check if file already exists
+    if (file.exists(file_path)) {
+        #If so, load it
+        loaded_sheet <- read_excel(file_path)
+    } else {
+        if (manufacturer == "Lotek") {
+            loaded_sheet <- tibble(
+                logger_serial_no = character(),
+                logger_model = character(),
+                producer = character(),
+                production_year = numeric(),
+                project = character(),
+                starttime_gmt = as.POSIXct(character()),
+                download_type = character(),
+                download_date = as.Date(character()),
+                comment = character()
+            )
+         } else if (manufacturer == "MigrateTech") {
+            loaded_sheet <- tibble(
+                logger_serial_no = character(),
+                logger_model = character(),
+                producer = character(),
+                production_year = numeric(),
+                project = character(),
+                starttime_gmt = as.POSIXct(character()),
+                logging_mode = numeric(),
+                days_delayed = numeric(),
+                programmed_gmt_time = as.POSIXct(character()),
+                download_type = character(),
+                download_date = as.Date(character()),
+                comment = character(),
+                priority = character()
+            )
+        }
+    }
+    return(loaded_sheet)
 }
 
+#' Load multiple nonresponsive logger sheets
+#'
+#' This function loads nonresponsive logger sheets for multiple file paths and manufacturers.
+#'
+#' @param file_paths A character vector of file paths to load.
+#' @param manufacturers A character vector of manufacturers, same length as file_paths.
+#' @return A named list of tibbles, each containing nonresponsive logger data for the corresponding manufacturer.
+#' @examples
+#' dontrun{
+#' file_paths <- c("lotek.xlsx", "migratetech.xlsx")
+#' manufacturers <- c("Lotek", "MigrateTech")
+#' nonresponsive_list <- load_nonresponsive(file_paths, manufacturers)
+#' }
+#' @export
+load_nonresponsive <- function(file_paths, manufacturers) {
+    if (length(file_paths) != length(manufacturers)) {
+        stop("file_paths and manufacturers must be the same length.")
+    }
+    sheets_list <- lapply(seq_along(file_paths), function(i) {
+        load_nonresponsive_sheet(file_paths[i], manufacturers[i])
+    })
+    names(sheets_list) <- tolower(manufacturers)
+    return(sheets_list)
+}
 
 #' Load master import file for a given colony
 #'
@@ -287,6 +345,11 @@ load_partner_metadata <- function(file_path) {
 #' @export
 append_encounter_data <- function(master_metadata, encounter_data) {
 
+    if (nrow(encounter_data) == 0) {
+        log_info("No encounter data to append.")
+        return(master_metadata)
+    }
+
     # Change longer column names in encounter_data to match those in master_metadata
     names(encounter_data)[names(encounter_data) == "other relevant variables, e.g. 'gonys', 'culmen,"] <- "other"
 
@@ -357,7 +420,16 @@ add_loggers_from_startup <- function(master_startup) {
         log_trace("Processing startup file: ", startup_path)
 
         # Peek at excel file to determine column number
-        startup_file <- suppressWarnings(read_excel(startup_path, .name_repair = "none", n_max = 1))
+        startup_file <- tryCatch(
+            suppressWarnings(read_excel(startup_path, .name_repair = "none", n_max = 1)),
+            error = function(e) {
+                log_trace(paste("Unable to import:", startup_path, e))
+                return(NULL)
+            }
+        )
+        if (is.null(startup_file)) {
+            next
+        }
 
         if (ncol(startup_file) != ncol(master_startup)) {
             log_trace(paste("Skipping startup file due to column number mismatch:", startup_path))
@@ -367,7 +439,7 @@ add_loggers_from_startup <- function(master_startup) {
         # Peeking at the excel files can miss empty columns created further down.
         # Import is wrapped in a try catch to handle import failures.
         startup_file <- tryCatch(
-            read_excel(startup_path, col_types = excel_classes, .name_repair = "none"),
+            suppressWarnings(read_excel(startup_path, col_types = excel_classes, .name_repair = "none")),
             error = function(e) {
                 log_trace(paste("Unable to import:", startup_path, e))
                 return(NULL)
@@ -527,6 +599,7 @@ get_all_locations <- function() {
     }
 
     countries <- list.dirs(locations_path, full.names = FALSE, recursive = FALSE)
+    countries <- sort(countries)
     all_locations <- lapply(countries, function(country) {
         country_path <- file.path(locations_path, country)
         colonies <- list.dirs(country_path, full.names = FALSE, recursive = FALSE)
@@ -598,13 +671,22 @@ set_comments <- function(master_startup, index, logger_comments) {
 #' @param master_startup A data frame containing the master startup and shutdown information.
 #' @param logger_returns A data frame containing logger return information.
 #' @param restart_times A data frame containing logger restart information.
-#' @return An updated dataframe containing the modified master import data frame.
+#' @param nonresponsive_list A list containing tibbles of unresponsive loggers for different manufacturers.
+#' The name of the list element should match the producer name in master_startup (e.g., "Lotek", "MigrateTech").
+#' @return A list consisting of two elements:
+#'  - `master_startup``: An updated dataframe containing the modified master import data frame.
+#'  - `nonresponsive_list`: An updated list containing the modified nonresponsive logger data frames.
 #' @examples
 #' dontrun{
 #' updated_master_startup <- handle_returned_loggers(master_startup, logger_returns, restart_times)
 #' }
 #' @export
-handle_returned_loggers <- function(colony, master_startup, logger_returns, restart_times) {
+handle_returned_loggers <- function(colony, master_startup, logger_returns, restart_times, nonresponsive_list = list()) {
+
+    if (nrow(logger_returns) == 0) {
+        log_info("No logger returns to process.")
+        return(list(master_startup = master_startup, nonresponsive_list = nonresponsive_list))
+    }
 
     log_trace("Check returned loggers")
     valid_status <- logger_returns$status != "No download attemted"
@@ -700,8 +782,54 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
     }
 
     # HANDLE UNRESPONSIVES
+    log_trace("Handle nonresponsive loggers")
 
-    return(master_startup)
+    nonresponsive_index = which(logger_returns$`stored or sent to?` == "Nonresponsive")
+    if (length(nonresponsive_index) > 0) {
+        nonresponsive_returns <- logger_returns[nonresponsive_index, ]
+        # Get manufacturers
+        nonresponsive_returns$manufacturer <- master_startup$producer[match(nonresponsive_returns$logger_id, master_startup$logger_serial_no)]
+        nonresponsive_returns$manufacturer_2 <- tolower(nonresponsive_returns$manufacturer)
+
+        # biotrack loggers should go in the lotek sheet
+        nonresponsive_returns$manufacturer_2[nonresponsive_returns$manufacturer_2 == "biotrack"] <- "lotek"
+
+        for (manufacturer in tolower(names(nonresponsive_list))) {
+
+            nonresponsive_for_manufacturer <- nonresponsive_returns[nonresponsive_returns$manufacturer_2 == manufacturer, ]
+
+            if (nrow(nonresponsive_for_manufacturer) == 0) {
+                next
+            }
+
+
+            new_nonresponsive <- tibble(
+                logger_serial_no = nonresponsive_for_manufacturer$logger_id,
+                logger_model = master_startup$logger_model[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)],
+                producer = master_startup$producer[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)],
+                production_year = master_startup$production_year[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)],
+                project = master_startup$project[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)],
+                starttime_gmt = master_startup$starttime_gmt[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)],
+                download_type = "Nonresponsive",
+                download_date = nonresponsive_for_manufacturer$`download / stop_date`,
+                comment = nonresponsive_for_manufacturer$comment
+            )
+            if (manufacturer == "migratetech") {
+                new_nonresponsive$logging_mode = master_startup$logging_mode[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)]
+                new_nonresponsive$days_delayed = master_startup$days_delayed[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)]
+                new_nonresponsive$programmed_gmt_time = master_startup$programmed_gmt_time[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)]
+                new_nonresponsive$priority = NA
+                # reorder columns
+                new_nonresponsive <- new_nonresponsive[, names(nonresponsive[[manufacturer]])]
+            }
+
+            nonresponsive_list[[manufacturer]] <- rbind(nonresponsive_list[[manufacturer]], new_nonresponsive)
+            log_success("Added ", nrow(new_nonresponsive), " nonresponsive loggers to ", manufacturer, " sheet.")
+        }
+    }
+
+
+    return(list(master_startup = master_startup, nonresponsive_list = nonresponsive_list))
 }
 
 #' Add partner provided metadata to the master import file
@@ -717,7 +845,14 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
 #'
 #' @return An updated version of the master import file, as a list where each element is a sheet from the excel file.
 #' @export
-handle_partner_metadata <- function(colony, new_metadata, master_import) {
+handle_partner_metadata <- function(colony, new_metadata, master_import, nonresponsive_list = list()) {
+
+    if (!all(c("ENCOUNTER DATA", "LOGGER RETURNS", "RESTART TIMES") %in% names(new_metadata))) {
+        stop("new_metadata must contain the sheets: ENCOUNTER DATA, LOGGER RETURNS, RESTART TIMES")
+    }
+    if (!all(c("METADATA", "STARTUP_SHUTDOWN") %in% names(master_import))) {
+        stop("master_import must contain the sheets: METADATA, STARTUP_SHUTDOWN")
+    }
 
     log_info("Add missing sessions from start up files")
     updated_loggers <- add_loggers_from_startup(master_import$`STARTUP_SHUTDOWN`)
@@ -730,11 +865,12 @@ handle_partner_metadata <- function(colony, new_metadata, master_import) {
     master_import$METADATA <- updated_metadata
 
     log_info("Update sessions from logger returns")
-    updated_sessions <- handle_returned_loggers(colony, master_import$`STARTUP_SHUTDOWN`, new_metadata$`LOGGER RETURNS`, new_metadata$`RESTART TIMES`)
+    updated_sessions <- handle_returned_loggers(colony, master_import$`STARTUP_SHUTDOWN`, new_metadata$`LOGGER RETURNS`, new_metadata$`RESTART TIMES`, nonresponsive_list)
 
-    master_import$`STARTUP_SHUTDOWN` <- updated_sessions
+    master_import$`STARTUP_SHUTDOWN` <- updated_sessions$master_startup
+    nonresponsive_list <- updated_sessions$nonresponsive_list
 
-    return(master_import)
+    return(list(master_import = master_import, nonresponsive_list = nonresponsive_list))
 }
 
 
@@ -756,4 +892,25 @@ handle_partner_metadata <- function(colony, new_metadata, master_import) {
 #' @export
 save_master_sheet <- function(new_master_sheets, filepath) {
     openxlsx2::write_xlsx(new_master_sheets, filepath, first_row = TRUE, first_col = TRUE, widths = "auto", na.strings = "")
+}
+
+#' Save multiple nonresponsive logger sheets to Excel files
+#'
+#' This function iterates through a list of nonresponsive logger sheets and a vector of file paths,
+#' saving each sheet to its corresponding file path.
+#' @param file_paths A character vector of file paths to save each sheet.
+#' @param nonresponsive_list A named list of tibbles, each containing nonresponsive logger data.
+#'
+#' @return No return value.
+#' @examples
+#' save_multiple_nonresponsive(nonresponsive_list, file_paths)
+#' @export
+save_nonresponsive <- function(file_paths, nonresponsive_list) {
+    if (length(nonresponsive_list) != length(file_paths)) {
+        stop("nonresponsive_list and file_paths must be the same length.")
+    }
+    for (i in seq_along(nonresponsive_list)) {
+        openxlsx2::write_xlsx(nonresponsive_list[[i]], file_paths[i], first_row = TRUE, first_col = TRUE, widths = "auto", na.strings = "")
+        log_success("Saved nonresponsive sheet to: ", file_paths[i])
+    }
 }
