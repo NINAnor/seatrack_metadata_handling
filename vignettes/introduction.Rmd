@@ -171,7 +171,7 @@ head(master_import$data$METADATA)
 
 ```
 
-Optionally, you can also load or initialise some sheets of nonresponsive loggers. This function takes a vector of file paths and a vector of 
+Optionally, you can also load or initialise some sheets of nonresponsive loggers. This function takes a vector of file paths and a vector of manufacturers.
 
 ```{r loadunresponsive}
 

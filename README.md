@@ -7,3 +7,5 @@ devtools::install_github("jevansbio/seatrack_functions")
 ```
 
 Documentation can be found [here](https://jevansbio.github.io/seatrack_functions/)
+
+An example of using the functions can be found [here](https://jevansbio.github.io/seatrack_functions/articles/introduction.html)
