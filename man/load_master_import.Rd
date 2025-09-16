@@ -19,7 +19,7 @@ This function loads the master import file for a specified colony.
 It iterates through the appropriate sheets and combines the data into a list of data frames.
 }
 \examples{
-dontrun{
+\dontrun{
 load_master_import("ColonyA")
 }
 }

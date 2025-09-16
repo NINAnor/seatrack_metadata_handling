@@ -18,7 +18,9 @@ A named list of tibbles, each containing nonresponsive logger data for the corre
 This function loads nonresponsive logger sheets for multiple file paths and manufacturers.
 }
 \examples{
+\dontrun{
 file_paths <- c("lotek.xlsx", "migratetech.xlsx")
 manufacturers <- c("Lotek", "MigrateTech")
 nonresponsive_list <- load_nonresponsive(file_paths, manufacturers)
+}
 }

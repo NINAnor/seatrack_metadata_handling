@@ -35,7 +35,7 @@ A list consisting of two elements:
 This function processes logger return information and updates the master import data frame accordingly.
 }
 \examples{
-dontrun{
+\dontrun{
 updated_master_startup <- handle_returned_loggers(master_startup, logger_returns, restart_times)
 }
 }

@@ -22,7 +22,7 @@ Find a logger's unfinished session in the master startup data frame
 This function finds the unfinished session for a given logger in the master startup data frame.
 }
 \examples{
-dontrun{
+\dontrun{
 unfinished_session <- get_unfinished_session(master_startup, "Logger123", as.Date("2023-01-15"))
 }
 }

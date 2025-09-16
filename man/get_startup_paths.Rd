@@ -13,7 +13,7 @@ A character vector containing paths to all Excel files in the specified subdirec
 This function retrieves paths to all Excel files in the "Starttime files and stored loggers" subdirectory of the sea track folder.
 }
 \examples{
-dontrun{
+\dontrun{
 all_xlsx_files <- get_startup_paths()
 }
 }

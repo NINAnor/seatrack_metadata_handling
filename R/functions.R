@@ -6,7 +6,7 @@
 #'
 #' @return None
 #' @examples
-#' dontrun{
+#' \dontrun{
 #'  set_sea_track_folder("/path/to/sea/track/folder")
 #' }
 #' @export
@@ -28,7 +28,7 @@ set_sea_track_folder <- function(dir) {
 #' @return None
 #'
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' start_logging("/path/to/log/directory")
 #' }
 #' @export
@@ -53,7 +53,7 @@ start_logging <- function(log_dir = NULL, log_file = paste0("seatrack_functions_
 #' @return A character string representing the path to the master import file.
 #' @examples
 #'
-#' dontrun{
+#' \dontrun{
 #'  get_master_import_folder("ColonyA")
 #' }
 #' @export
@@ -98,7 +98,7 @@ get_master_import_path <- function(colony) {
 #'
 #' @return A character vector containing paths to all Excel files in the specified subdirectory.
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' all_xlsx_files <- get_startup_paths()
 #' }
 #' @export
@@ -133,7 +133,7 @@ get_startup_paths <- function() {
 #' @param col_types A list the same length as sheets, containing either NULL or a character vector of read_excel classes.
 #' @return A list of data frames, each corresponding to a sheet in the Excel file.
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' sheets_data <- load_sheets_as_list("path/to/file.xlsx", c("Sheet1", "Sheet2"), skip = 1)
 #' }
 #' @export
@@ -237,7 +237,7 @@ load_nonresponsive_sheet <- function(file_path, manufacturer = c("Lotek", "Migra
 #' @param manufacturers A character vector of manufacturers, same length as file_paths.
 #' @return A named list of tibbles, each containing nonresponsive logger data for the corresponding manufacturer.
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' file_paths <- c("lotek.xlsx", "migratetech.xlsx")
 #' manufacturers <- c("Lotek", "MigrateTech")
 #' nonresponsive_list <- load_nonresponsive(file_paths, manufacturers)
@@ -263,7 +263,7 @@ load_nonresponsive <- function(file_paths, manufacturers) {
 #'  data: A list of tibbles, each corresponding to a sheet in the master import file.
 #'  path: The file path of the loaded master import file.
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' load_master_import("ColonyA")
 #' }
 load_master_import <- function(colony) {
@@ -313,7 +313,7 @@ load_master_import <- function(colony) {
 #' @param file_path A character string specifying the path to the Excel file.
 #' @return A list of data frames, each corresponding to a sheet in the Excel file.
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' load_partner_metadata("path/to/partner_metadata.xlsx")
 #' }
 #' @export
@@ -339,7 +339,7 @@ load_partner_metadata <- function(file_path) {
 #' @param encounter_data A data frame representing the encounter data to be appended.
 #' @return A data frame with the encounter data appended to the master metadata.
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' updated_master_metadata <- append_encounter_data(master_metadata, encounter_data)
 #' }
 #' @export
@@ -400,7 +400,7 @@ append_encounter_data <- function(master_metadata, encounter_data) {
 #'
 #' @return A new version of the master startup data frame, with the logger added if succesful.
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' updated_master_startup <- add_loggers_from_startup_sheets(master_startup)
 #' }
 #' @export
@@ -516,7 +516,7 @@ add_loggers_from_startup <- function(master_startup) {
 #'
 #' @return A list containing the index of the unfinished session and the session data frame, or NULL if no unfinished session is found.
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' unfinished_session <- get_unfinished_session(master_startup, "Logger123", as.Date("2023-01-15"))
 #' }
 #' @export
@@ -677,7 +677,7 @@ set_comments <- function(master_startup, index, logger_comments) {
 #'  - `master_startup``: An updated dataframe containing the modified master import data frame.
 #'  - `nonresponsive_list`: An updated list containing the modified nonresponsive logger data frames.
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' updated_master_startup <- handle_returned_loggers(master_startup, logger_returns, restart_times)
 #' }
 #' @export

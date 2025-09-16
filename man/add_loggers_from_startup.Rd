@@ -18,7 +18,7 @@ Because the data quality of older startup sheets is variable, the function check
 Incorrectly formatted datetime columns can also lead to issues.
 }
 \examples{
-dontrun{
+\dontrun{
 updated_master_startup <- add_loggers_from_startup_sheets(master_startup)
 }
 }

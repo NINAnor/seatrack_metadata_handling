@@ -21,7 +21,7 @@ None
 This function initializes logging to a specified directory.
 }
 \examples{
-dontrun{
+\dontrun{
 start_logging("/path/to/log/directory")
 }
 }
