@@ -55,7 +55,7 @@ set_sea_track_folder(path_to_seatrack)
 ```{r generatepath, echo = FALSE}
 # Not actually setting path in the vignette
 path_to_seatrack <- file.path("a_filepath","SEATRACK - shared")
-.sea_track_folder <- path_to_seatrack
+.sea_track_folder <<- path_to_seatrack
 logger::log_info("Sea track folder set to: ", .sea_track_folder)
 ```
 
@@ -175,7 +175,7 @@ Optionally, you can also load or initialise some sheets of nonresponsive loggers
 
 ```{r loadunresponsive}
 
-nonresponsive_list <- load_nonresponsive(c("lotek_sheet.xlsx", "migrate_sheet.xlsx"), c("Lotek", "MigrateTech))
+nonresponsive_list <- load_nonresponsive(c("lotek_sheet.xlsx", "migrate_sheet.xlsx"), c("Lotek", "MigrateTech"))
 
 ```
 
