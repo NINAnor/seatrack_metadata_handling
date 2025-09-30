@@ -1,6 +1,6 @@
 ^renv$
 ^renv\.lock$
-^seatrackfunctions\.Rproj$
+^\.Rproj$
 ^\.Rproj\.user$
 log.txt
 ^test_data

@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(seatrackfunctions)
+library(seatrackRmetadata)
 
-test_check("seatrackfunctions")
+test_check("seatrackRmetadata")

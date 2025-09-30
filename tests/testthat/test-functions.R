@@ -169,8 +169,7 @@ describe("Data Manipulation Operations", {
       comment = "No response"
     )
     openxlsx2::write_xlsx(df, file_path)
-    result <- load_nonresponsive(file_path, "Lotek")
-    expect_true(is.data.frame(result))
+    result <- load_nonresponsive(c(file_path), c("Lotek"))$lotek
     expect_equal(nrow(result), 1)
     expect_equal(result$producer[1], "Lotek")
     file.remove(file_path)
@@ -178,8 +177,7 @@ describe("Data Manipulation Operations", {
 
   test_that("load_nonresponsive initializes empty sheet for Lotek if file missing", {
     file_path <- file.path(tmp_dir, "missing_lotek_unresponsive.xlsx")
-    result <- load_nonresponsive(file_path, "Lotek")
-    expect_true(is.data.frame(result))
+    result <- load_nonresponsive(file_path, "Lotek")$lotek
     expect_equal(nrow(result), 0)
     expect_true(all(c(
       "logger_serial_no", "logger_model", "producer", "production_year",
@@ -189,8 +187,7 @@ describe("Data Manipulation Operations", {
 
   test_that("load_nonresponsive initializes empty sheet for MigrateTech if file missing", {
     file_path <- file.path(tmp_dir, "missing_migratetech_unresponsive.xlsx")
-    result <- load_nonresponsive(file_path, "MigrateTech")
-    expect_true(is.data.frame(result))
+    result <- load_nonresponsive(file_path, "MigrateTech")$migratetech
     expect_equal(nrow(result), 0)
     expect_true(all(c(
       "logger_serial_no", "logger_model", "producer", "production_year", "project",
