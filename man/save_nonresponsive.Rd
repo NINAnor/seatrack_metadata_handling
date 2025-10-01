@@ -19,5 +19,7 @@ This function iterates through a list of nonresponsive logger sheets and a vecto
 saving each sheet to its corresponding file path.
 }
 \examples{
+\dontrun{
 save_multiple_nonresponsive(nonresponsive_list, file_paths)
+}
 }

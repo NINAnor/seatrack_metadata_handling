@@ -55,8 +55,9 @@ set_sea_track_folder(path_to_seatrack)
 ```{r generatepath, echo = FALSE}
 # Not actually setting path in the vignette
 path_to_seatrack <- file.path("a_filepath","SEATRACK - shared")
-.sea_track_folder <<- path_to_seatrack
-logger::log_info("Sea track folder set to: ", .sea_track_folder)
+sea_track_folder <- path_to_seatrack
+set_sea_track_folder(".")
+logger::log_info("Sea track folder set to: ", sea_track_folder)
 ```
 
 ## Loading data
@@ -119,7 +120,7 @@ master_import <- load_master_import("TestColony")
 
 ```{r generatemasterdata, echo = FALSE}
 colony <- "TestColony"
-master_import_folder <- file.path(.sea_track_folder, "Database", "Imports_Metadata")
+master_import_folder <- file.path(sea_track_folder, "Database", "Imports_Metadata")
 full_colony_file_path <- file.path(master_import_folder, "imports_TestColony_2025.xlsx")
 logger::log_success("Master import file for colony '", colony, "' found at: ", full_colony_file_path)
 

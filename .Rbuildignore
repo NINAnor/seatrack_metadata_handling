@@ -10,3 +10,6 @@ test_script.R
 ^docs$
 ^pkgdown$
 ^\.github$
+^LICENSE\.md$
+^doc$
+^Meta$

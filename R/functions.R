@@ -15,8 +15,8 @@ set_sea_track_folder <- function(dir) {
         stop("The specified directory does not exist.")
     }
 
-    .sea_track_folder <<- dir
-    log_info("Sea track folder set to: ", .sea_track_folder)
+    the$sea_track_folder <- dir
+    log_info("Sea track folder set to: ", the$sea_track_folder)
 }
 
 #' Start logging to a file
@@ -58,11 +58,11 @@ start_logging <- function(log_dir = NULL, log_file = paste0("seatrack_functions_
 #' }
 #' @export
 get_master_import_path <- function(colony) {
-    if (is.null(.sea_track_folder)) {
+    if (is.null(the$sea_track_folder)) {
         stop("Sea track folder is not set. Please use set_sea_track_folder() to set it.")
     }
     # Get the path to the master import folder
-    master_import_folder <- file.path(.sea_track_folder, "Database", "Imports_Metadata")
+    master_import_folder <- file.path(the$sea_track_folder, "Database", "Imports_Metadata")
 
     # List all files in the master import folder
     files <- list.files(master_import_folder, pattern = "^[^~].*\\.xlsx$")
@@ -103,10 +103,10 @@ get_master_import_path <- function(colony) {
 #' }
 #' @export
 get_startup_paths <- function() {
-    if (is.null(.sea_track_folder)) {
+    if (is.null(the$sea_track_folder)) {
         stop("Sea track folder is not set. Please use set_sea_track_folder() to set it.")
     }
-    start_time_path <- file.path(.sea_track_folder, "Starttime files and stored loggers")
+    start_time_path <- file.path(the$sea_track_folder, "Starttime files and stored loggers")
     subfolders <- rev(list.dirs(start_time_path, full.names = TRUE, recursive = FALSE))
     ignored_folders <- c("starttimes for other projects")
     for (ignored_folder in ignored_folders) {
@@ -581,19 +581,21 @@ get_unfinished_session <- function(master_startup, logger_id, logger_download_st
 #' Retrieves a list of all locations (colonies) organized by country from the Sea Track folder.
 #'
 #' @return A named list where each element is a vector of colony names for a country.
-#' @details The function expects the global variable `.sea_track_folder` to be set, and looks for a "Locations" subfolder within it.
+#' @details The function expects the global variable `the$sea_track_folder` to be set, and looks for a "Locations" subfolder within it.
 #' Each country is represented as a subdirectory within "Locations", and each colony is a subdirectory within its respective country folder.
-#' If `.sea_track_folder` is not set, the function will stop with an error message.
+#' If `the$sea_track_folder` is not set, the function will stop with an error message.
 #' @examples
+#' \dontrun{
 #' set_sea_track_folder("/path/to/sea_track")
 #' colonies <- get_all_locations()
 #' print(colonies)
+#' }
 #' @export
 get_all_locations <- function() {
-    if (is.null(.sea_track_folder)) {
+    if (is.null(the$sea_track_folder)) {
         stop("Sea track folder is not set. Please use set_sea_track_folder() to set it.")
     }
-    locations_path <- file.path(.sea_track_folder, "Locations")
+    locations_path <- file.path(the$sea_track_folder, "Locations")
     if (!dir.exists(locations_path)) {
         stop("Locations folder not found in the sea track folder.")
     }
@@ -620,8 +622,9 @@ get_all_locations <- function() {
 #'
 #' @return The updated `master_startup` data frame.
 #' @examples
+#' \dontrun{
 #' set_master_startup_value(master_startup, 2, "download_type", "Succesfully downloaded")
-#'
+#' }
 #' @export
 set_master_startup_value <- function(master_startup, index, column, value) {
 
@@ -643,10 +646,11 @@ set_master_startup_value <- function(master_startup, index, column, value) {
 #'
 #' @return The updated master_startup data frame with the modified comment.
 #' @examples
+#' \dontrun{
 #' master_startup <- data.frame(comment = c("", "Existing comment"))
 #' set_comments(master_startup, 1, "New logger comment")
 #' set_comments(master_startup, 2, "Another logger comment")
-#'
+#' }
 #' @export
 set_comments <- function(master_startup, index, logger_comments) {
     if (!is.na(logger_comments) && logger_comments != "") {
@@ -820,7 +824,7 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
                 new_nonresponsive$programmed_gmt_time = master_startup$programmed_gmt_time[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)]
                 new_nonresponsive$priority = NA
                 # reorder columns
-                new_nonresponsive <- new_nonresponsive[, names(nonresponsive[[manufacturer]])]
+                new_nonresponsive <- new_nonresponsive[, names(nonresponsive_list[[manufacturer]])]
             }
 
             nonresponsive_list[[manufacturer]] <- rbind(nonresponsive_list[[manufacturer]], new_nonresponsive)
@@ -842,6 +846,7 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
 #' @param colony A character string specifying the name of the colony.
 #' @param new_metadata List of tibbles, each corresponding to a sheet in the partner provided information file.
 #' @param master_import List of tibbles, each corresponding to a sheet in the master import file.
+#' @param nonresponsive_list A named list of tibbles, each containing nonresponsive logger data for different manufacturers.
 #'
 #' @return An updated version of the master import file, as a list where each element is a sheet from the excel file.
 #' @export
@@ -903,7 +908,9 @@ save_master_sheet <- function(new_master_sheets, filepath) {
 #'
 #' @return No return value.
 #' @examples
+#' \dontrun{
 #' save_multiple_nonresponsive(nonresponsive_list, file_paths)
+#' }
 #' @export
 save_nonresponsive <- function(file_paths, nonresponsive_list) {
     if (length(nonresponsive_list) != length(file_paths)) {
@@ -914,3 +921,4 @@ save_nonresponsive <- function(file_paths, nonresponsive_list) {
         log_success("Saved nonresponsive sheet to: ", file_paths[i])
     }
 }
+

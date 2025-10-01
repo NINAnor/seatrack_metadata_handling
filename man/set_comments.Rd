@@ -22,8 +22,9 @@ If a non-empty logger comment is provided, it will be set as the comment if no e
 If an existing comment is present, the logger comment will be appended to it, separated by " | ".
 }
 \examples{
+\dontrun{
 master_startup <- data.frame(comment = c("", "Existing comment"))
 set_comments(master_startup, 1, "New logger comment")
 set_comments(master_startup, 2, "Another logger comment")
-
+}
 }

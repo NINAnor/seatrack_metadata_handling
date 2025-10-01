@@ -82,16 +82,15 @@ describe("File System Operations", {
   test_that("set_sea_track_folder sets global variable and logs", {
     expect_error(set_sea_track_folder("nonexistent_dir"))
     set_sea_track_folder(tmp_dir)
-    expect_true(exists(".sea_track_folder", envir = .GlobalEnv))
+    expect_true(exists("sea_track_folder", envir = the))
   })
 
   test_that("get_master_import_path errors if folder not set", {
-    .sea_track_folder <<- NULL
     expect_error(get_master_import_path("ColonyA"))
   })
 
   test_that("get_startup_paths returns xlsx files", {
-    .sea_track_folder <<- tmp_dir
+    the$sea_track_folder <<- tmp_dir
     startup_path <- file.path(tmp_dir, "Starttime files and stored loggers", 2025)
     dir.create(startup_path, recursive = TRUE, showWarnings = FALSE)
     test_file <- file.path(startup_path, "test.xlsx")
@@ -351,7 +350,7 @@ describe("Logger Session Management", {
     startup_dir <- file.path(tmp_dir, "Starttime files and stored loggers", "2025")
     dir.create(startup_dir, recursive = TRUE, showWarnings = FALSE)
     writeLines("not an excel file", file.path(startup_dir, "corrupt.xlsx"))
-    .sea_track_folder <<- tmp_dir
+    the$sea_track_folder <<- tmp_dir
     result <- add_loggers_from_startup(df)
     expect_equal(nrow(result), 1)
     file.remove(file.path(startup_dir, "corrupt.xlsx"))
@@ -372,7 +371,7 @@ describe("Logger Session Management", {
     )
     file_path <- file.path(startup_dir, "wrong_type.xlsx")
     openxlsx2::write_xlsx(wrong_type_logger, file_path)
-    .sea_track_folder <<- tmp_dir
+    the$sea_track_folder <<- tmp_dir
     result <- add_loggers_from_startup(df)
     expect_equal(nrow(result), 1)
     file.remove(file_path)
@@ -389,7 +388,7 @@ describe("Logger Session Management", {
     wrong_logger <- tibble(wrong_col = "B")
     file_path <- file.path(startup_dir, "wrong_startup.xlsx")
     openxlsx2::write_xlsx(wrong_logger, file_path)
-    .sea_track_folder <<- tmp_dir
+    the$sea_track_folder <<- tmp_dir
     result <- add_loggers_from_startup(df)
     expect_equal(nrow(result), 1)
     file.remove(file_path)
@@ -400,17 +399,17 @@ describe("Colony Location Operations", {
 
 
   test_that("get_all_locations fails if sea track folder is not set", {
-    .sea_track_folder <<- NULL
+    the$sea_track_folder <<- NULL
     expect_error(get_all_locations(), "Sea track folder is not set")
   })
 
   test_that("get_all_locations fails if Locations folder doesn't exist", {
-    .sea_track_folder <<- tmp_dir
+    the$sea_track_folder <<- tmp_dir
     expect_error(get_all_locations(), "Locations folder not found")
   })
 
   test_that("get_all_locations returns correct structure", {
-    .sea_track_folder <<- tmp_dir
+    the$sea_track_folder <<- tmp_dir
     locations_path <- file.path(tmp_dir, "Locations")
     # Create test directory structure
     dir.create(file.path(locations_path, "Norway", "Jan Mayen"), recursive = TRUE)

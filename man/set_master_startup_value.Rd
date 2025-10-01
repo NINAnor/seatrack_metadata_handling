@@ -22,6 +22,7 @@ The updated \code{master_startup} data frame.
 This function updates the value of a specified cell in the \code{master_startup} data frame.
 }
 \examples{
+\dontrun{
 set_master_startup_value(master_startup, 2, "download_type", "Succesfully downloaded")
-
+}
 }

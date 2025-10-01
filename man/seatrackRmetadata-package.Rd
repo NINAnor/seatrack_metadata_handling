@@ -6,12 +6,12 @@
 \alias{seatrackRmetadata-package}
 \title{seatrackRmetadata: Utility Functions for Seatrack}
 \description{
-Some utility functions to assist in the handling of data as part of the seatrack project
+Some utility functions to assist in the handling of data as part of the seatrack project.
 }
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://ninanor.github.io/seatrack_metadata_handling/}
+  \item \url{https://ninanor.github.io/seatrack-metadata/}
 }
 
 }

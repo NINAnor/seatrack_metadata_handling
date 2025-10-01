@@ -17,6 +17,8 @@ handle_partner_metadata(
 \item{new_metadata}{List of tibbles, each corresponding to a sheet in the partner provided information file.}
 
 \item{master_import}{List of tibbles, each corresponding to a sheet in the master import file.}
+
+\item{nonresponsive_list}{A named list of tibbles, each containing nonresponsive logger data for different manufacturers.}
 }
 \value{
 An updated version of the master import file, as a list where each element is a sheet from the excel file.
